@@ -1,12 +1,12 @@
 
 import { NextResponse } from 'next/server';
 import { stripe } from '@/utils/stripe';
-import { auth } from '@/lib/auth';
+import { requireSession } from '@/utils/session';
 
 export async function POST(request: Request) {
-	try {
-		const userSession = await auth()
-		const userId = userSession?.user?.id
+        try {
+                const session = await requireSession()
+                const userId = session.user?.id
 		if (!userId) {
 			return new Response('User ID is required', { status: 400 });
 		}
