@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Type Check
+        run: pnpm lint:ts
+      - name: Lint
+        run: pnpm lint
+      - name: Verify env keys
+        shell: bash
+        run: |
+          if [ ! -f .env.local ]; then
+            echo ".env.local missing" >&2
+            exit 1
+          fi
+          missing=0
+          for key in $(grep -v '^#' .env.example | cut -d= -f1); do
+            if ! grep -q "^$key=" .env.local; then
+              echo "Missing key: $key" >&2
+              missing=1
+            fi
+          done
+          if [ $missing -ne 0 ]; then
+            exit 1
+          fi
+      - name: Done
+        run: echo "CI passed ✅"
