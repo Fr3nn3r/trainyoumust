@@ -8,9 +8,9 @@ export default function UserMenu() {
 	const { data: session } = useSession();
 	const user = session?.user;
 
-	const handleSignOut = () => {
-		signOut();
-	};
+        const handleSignOut = () => {
+                signOut({ callbackUrl: '/' });
+        };
 
 	if (!user) return null;
 
