@@ -1,0 +1,96 @@
+Below is an example of a minimal, yet organized, project structure that builds on the Next.js SaaS Starter Template while adding your new AI Coach features. In this structure the core (auth, payment, Supabase, etc.) remains intact. New files and folders are added to support the dashboard tasks—overall layout, header update, Check-In, AI Coach, Wins Gallery, History Timeline, plus a new API/action for check-ins.
+
+──────────────────────────────
+Project Structure (tree view):
+
+root
+├── app/
+│   ├── app/                                   → Authenticated dashboard area
+│   │   ├── page.tsx                           → Main dashboard page integrating:
+│   │   │        • dashboard layout (Task 1)
+│   │   │        • CheckInCard, AICoachCard, WinsGallery, and HistoryTimeline (Tasks 2–5)
+│   │   └── layout.tsx                         → Dashboard layout wrapper (can include common sidebar, etc.)
+│   │
+│   ├── actions/
+│   │   ├── auth.ts                            → Already implemented
+│   │   ├── stripe.ts                          → Already implemented
+│   │   └── checkin.ts                         → New server action for handling daily check-ins (Task 2 & Task 6)
+│   │
+│   ├── api/
+│   │   ├── auth/                              → Already implemented endpoints
+│   │   ├── (payment)/                         → Already implemented payment endpoints
+│   │   ├── profile/                           → Already implemented endpoints
+│   │   ├── webhook/                           → Already implemented webhook handlers
+│   │   └── checkin/                           → New API endpoint group for check-in operations
+│   │         └── route.ts                     → Handles GET/POST for check-in records (Task 6)
+│   │
+│   ├── success/                               → Existing success pages (e.g., payment success)
+│   ├── layout.tsx                             → Root layout with global providers
+│   └── page.tsx                               → Home/landing page for unauthorized users
+│
+├── components/
+│   ├── app/                                   → Application-specific components
+│   │   ├── Header.tsx                         → Updated header component with new Tailwind classes (Task 7)
+│   │   ├── CheckInCard.tsx                    → New component for daily check-in (Task 2)
+│   │   ├── AICoachCard.tsx                    → New component for AI motivational message (Task 3)
+│   │   ├── WinsGallery.tsx                    → New component to display wins and progress screenshots (Task 4)
+│   │   └── HistoryTimeline.tsx                → New component for check-in history timeline (Task 5)
+│   │
+│   ├── email/                                 → (Existing) Email template components
+│   ├── stripe/                                → (Existing) Stripe integration components
+│   ├── ui/                                    → (Existing) Base UI components (shadcn/ui, etc.)
+│   └── user/                                  → (Existing) Auth-related components (signin, signout, etc.)
+│
+├── lib/                                       → Core libraries and configuration files
+│   ├── hooks/                                 → Custom React hooks
+│   ├── auth.config.ts                         → Authentication configuration
+│   ├── auth.ts                                → Authentication utilities
+│   ├── authSendRequest.ts                     → Auth request handlers
+│   ├── mail.ts                                → Email configuration
+│   └── utils.ts                               → General helpers
+│
+├── types/                                     → TypeScript types
+│   ├── database.types.ts                      → Database (Supabase) schema types
+│   └── next-auth.d.ts                         → Next-Auth type extensions
+│
+├── utils/                                     → Utility functions and API clients
+│   ├── supabase/                              → Supabase client and utilities
+│   │   ├── client.ts                          → Supabase client configuration
+│   │   ├── front.ts                           → Frontend-specific Supabase utilities
+│   │   ├── server.ts                          → Server-side Supabase utilities
+│   │   └── user.ts                            → User-related utilities
+│   └── stripe.ts                              → Stripe utility functions
+│
+├── supabase/                                  → Supabase configuration folder
+│   └── config.toml                            → Supabase project configuration
+│
+├── public/                                    → Static assets (images, fonts, etc.)
+├── .env.local                                 → Environment variables
+├── config.ts                                  → Global app configuration
+├── middleware.ts                              → Next.js middleware for auth and routing
+└── [config files]                             → (next.config.ts, tailwind.config.ts, etc.)
+
+──────────────────────────────
+Explanation of New/Modified Elements:
+
+1. Dashboard Page (app/app/page.tsx):
+   • Implements the overall layout (Task 1) using shadcn/ui layout components.
+   • Includes sections for daily check-in, motivational AI message, wins gallery, and history timeline.
+
+2. Header Component (components/app/Header.tsx):
+   • Updated style with Tailwind classes like bg-primary and text-primary-foreground (Task 7).
+
+3. New UI Components (under components/app/):
+   • CheckInCard.tsx (Task 2): Renders the check-in input (mood textarea, wins input, file upload with Dropzone, and submit button). Uses local state for mood, wins, and file.
+   • AICoachCard.tsx (Task 3): Displays a motivational message and updates based on check-in input.
+   • WinsGallery.tsx (Task 4): Shows a responsive grid of wins and thumbnail images, with modal details.
+   • HistoryTimeline.tsx (Task 5): Lists previous check-ins in a timeline format with dates and excerpts.
+
+4. Server Action & API (app/actions/checkin.ts and app/api/checkin/route.ts):
+   • New endpoints for accepting and persisting check-in data. Uses Supabase utilities from utils/supabase to save and retrieve check-in records (Task 6).
+
+5. Data Integration (Task 6):
+   • Check-in submission handled by the new checkin action and API route.
+   • Later, components (WinsGallery, HistoryTimeline) will call the API to load persisted data from Supabase.
+
+This structure preserves the original SaaS Starter Template while adding the clear separation of concerns for your new AI Coach functionality. You can implement each task step by step, ensuring that the global UI (header, layout) appears first and that check-in and data tasks integrate with the existing backend.
