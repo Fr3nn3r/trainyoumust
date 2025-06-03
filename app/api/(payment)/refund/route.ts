@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import { stripe } from '@/utils/stripe';
 import { auth } from '@/lib/auth';
+import { logger } from '@/utils/logger';
 
 export async function POST(request: Request) {
 	try {
@@ -24,10 +25,10 @@ export async function POST(request: Request) {
 			return new Response('Payment Intent ID is required', { status: 400 });
 		}
 
-	} catch (error: any) {
-		console.error(error);
-		return NextResponse.json({ message: error.message }, { status: 500 });
-	}
+        } catch (error: any) {
+                logger.error('Refund API error', error);
+                return NextResponse.json({ message: error.message }, { status: 500 });
+        }
 }
 
 async function getPaymentIntentId(subscriptionId: string) {
@@ -42,8 +43,8 @@ async function getPaymentIntentId(subscriptionId: string) {
 		const paymentIntentId = latestInvoice.payment_intent;
 
 		return paymentIntentId;
-	} catch (error) {
-		console.error('Get PaymentIntent ID error:', error);
-		throw new Error('Cannot get PaymentIntent ID');
-	}
+        } catch (error) {
+                logger.error('Get PaymentIntent ID error', error);
+                throw new Error('Cannot get PaymentIntent ID');
+        }
 }

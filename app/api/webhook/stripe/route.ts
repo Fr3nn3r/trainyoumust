@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/utils/stripe';
 import { createSupabaseAdminClient } from '@/utils/supabase/server';
 import Stripe from 'stripe';
+import { logger } from '@/utils/logger';
 // This is where we receive Stripe webhook events
 // It used to update the user data, send emails, etc...
 // By default, it'll store the user in the database
@@ -16,10 +17,10 @@ export async function POST(request: NextRequest) {
 		let event;
 		try {
 			event = await stripe.webhooks.constructEventAsync(rawBody, signature!, process.env.STRIPE_WEBHOOK_SECRET!);
-		} catch (error: any) {
-			console.error(`Webhook signature verification failed: ${error.message}`);
-			return NextResponse.json({ statusCode: 400, message: 'Webhook Error' }, { status: 400 });
-		}
+                } catch (error: any) {
+                        logger.error(`Webhook signature verification failed: ${error.message}`);
+                        return NextResponse.json({ statusCode: 400, message: 'Webhook Error' }, { status: 400 });
+                }
 
 		const eventType = event.type;
 		try {
@@ -138,10 +139,10 @@ export async function POST(request: NextRequest) {
 					break;
 				}
 			}
-		} catch (error: any) {
-			console.error('Error processing webhook:', error);
-			return NextResponse.json({ message: error.message }, { status: 500 });
-		}
+                } catch (error: any) {
+                        logger.error('Error processing webhook', error);
+                        return NextResponse.json({ message: error.message }, { status: 500 });
+                }
 
 		return NextResponse.json({ statusCode: 200, message: 'success' });
 	} catch (error: any) {

@@ -3,6 +3,7 @@ import { getSupabaseClient } from '@/utils/supabase/server';
 import { auth } from "@/lib/auth";
 import { stripe } from '@/utils/stripe';
 import config from '@/config';
+import { logger } from '@/utils/logger';
 
 // Helper function to get plan name from price ID
 function getPlanNameFromPriceId(priceId: string): { name: string; interval: string } {
@@ -34,10 +35,10 @@ export async function GET() {
 			.eq('id', userId)
 			.single();
 
-		if (userError) {
-			console.error('Error fetching user data:', userError);
-			return NextResponse.json({ error: 'Error fetching user data' }, { status: 500 });
-		}
+                if (userError) {
+                        logger.error('Error fetching user data', userError);
+                        return NextResponse.json({ error: 'Error fetching user data' }, { status: 500 });
+                }
 
 		// Get subscription data
 		const { data: subscriptionData, error: subscriptionError } = await supabase
@@ -72,8 +73,8 @@ export async function GET() {
 			planInterval,
 			priceData
 		});
-	} catch (error) {
-		console.error('Error in profile API route:', error);
-		return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-	}
-} 
+        } catch (error) {
+                logger.error('Error in profile API route', error);
+                return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+        }
+}
