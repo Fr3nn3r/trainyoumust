@@ -3,11 +3,13 @@
 import { stripe } from '@/utils/stripe';
 import { headers } from 'next/headers';
 import { createSupabaseAdminClient } from '@/utils/supabase/server';
+import { requireSession } from '@/utils/session'
 const supabaseAdmin = await createSupabaseAdminClient();
 export async function createPortalSession(customerId: string) {
-	if (!customerId) {
-		throw new Error('Customer ID is required');
-	}
+        await requireSession();
+        if (!customerId) {
+                throw new Error('Customer ID is required');
+        }
 
 	try {
 		// get the current domain
@@ -28,7 +30,8 @@ export async function createPortalSession(customerId: string) {
 
 
 export async function refund(subscriptionId: string) {
-	try {
+        await requireSession();
+        try {
 		const subscription = await stripe.subscriptions.retrieve(subscriptionId);
 		const latestInvoice = await stripe.invoices.retrieve(subscription.latest_invoice as string);
 

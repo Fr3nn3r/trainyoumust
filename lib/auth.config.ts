@@ -29,8 +29,10 @@ const authConfig = {
 		url: process.env.NEXT_PUBLIC_SUPABASE_URL!,
 		secret: process.env.SUPABASE_SECRET_KEY!,
 	}),
-	callbacks: {
-		async session({ session, user }) {
+        callbacks: {
+                // The session cookie determines when the session expires. We
+                // create a Supabase JWT with the same expiry so RLS remains valid.
+                async session({ session, user }) {
 			const signingSecret = process.env.SUPABASE_JWT_SECRET
 
 			if (signingSecret) {

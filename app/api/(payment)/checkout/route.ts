@@ -2,11 +2,11 @@
 import { NextResponse } from 'next/server';
 import { stripe } from '@/utils/stripe';
 import { getSupabaseClient } from '@/utils/supabase/server';
-import { auth } from '@/lib/auth';
+import { requireSession } from '@/utils/session';
 export async function POST(request: Request) {
-	try {
-		const userSession = await auth()
-		const userId = userSession?.user?.id
+        try {
+                const session = await requireSession()
+                const userId = session.user?.id
 		// 检查 userId 是否存在
 		if (!userId) {
 			return new Response('User ID is required', { status: 400 });
