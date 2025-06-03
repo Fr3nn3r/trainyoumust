@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseClient } from '@/utils/supabase/server';
-import { auth } from "@/lib/auth";
+import { requireSession } from '@/utils/session';
 import { stripe } from '@/utils/stripe';
 import config from '@/config';
 import { logger } from '@/utils/logger';
@@ -19,11 +19,11 @@ function getPlanNameFromPriceId(priceId: string): { name: string; interval: stri
 }
 
 export async function GET() {
-	try {
-		const supabase = await getSupabaseClient();
-		const session = await auth();
+        try {
+                const session = await requireSession();
+                const supabase = await getSupabaseClient();
 
-		const userId = session?.user?.id;
+                const userId = session.user?.id;
 		if (!userId) {
 			return NextResponse.json({ error: 'User not authenticated' }, { status: 401 });
 		}

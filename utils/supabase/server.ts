@@ -1,6 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { auth } from '@/lib/auth'
-import { redirect } from 'next/navigation'
+import { requireSession } from '@/utils/session'
 import { Database } from '@/types/database.types'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -11,12 +10,7 @@ if (!supabaseUrl) throw new Error('Missing environment variable: NEXT_PUBLIC_SUP
 if (!supabaseAnon) throw new Error('Missing environment variable: NEXT_PUBLIC_SUPABASE_ANON_KEY')
 if (!supabaseServiceRole) throw new Error('Missing environment variable: SUPABASE_SECRET_KEY')
 const getSupabaseClient = async () => {
-	const session = await auth()
-
-	if (!session?.supabaseAccessToken) {
-		redirect('/')
-	}
-	// 如何 使用 session.supabaseAccessToken 来创建 supabase client
+        const session = await requireSession()
         return createClient<Database>(
                 supabaseUrl,
                 supabaseAnon,

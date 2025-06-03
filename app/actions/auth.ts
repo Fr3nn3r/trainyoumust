@@ -1,6 +1,7 @@
 'use server'
 
 import { signIn, signOut } from "@/lib/auth"
+import { requireSession } from '@/utils/session'
 
 export async function handleSignIn() {
 	// magic link and google both 
@@ -11,5 +12,7 @@ export async function handleSignIn() {
 }
 
 export async function handleSignOut() {
-	await signOut({ redirectTo: "/" })
-} 
+        // Ensure a session exists before attempting to sign out
+        await requireSession().catch(() => null)
+        await signOut({ redirectTo: "/" })
+}

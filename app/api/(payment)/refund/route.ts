@@ -5,9 +5,9 @@ import { auth } from '@/lib/auth';
 import { logger } from '@/utils/logger';
 
 export async function POST(request: Request) {
-	try {
-		const userSession = await auth()
-		const userId = userSession?.user?.id
+        try {
+                const session = await requireSession()
+                const userId = session.user?.id
 		if (!userId) {
 			return new Response('User ID is required', { status: 400 });
 		}
