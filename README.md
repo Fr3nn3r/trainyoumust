@@ -101,6 +101,10 @@ openPanelClientId: String    // Open Panel integration client ID
 emailProvider: String        // Email service provider (currently "nodemailer")
 ```
 
+### Logging
+
+Set `LOG_ENDPOINT` in your environment to enable sending logs to a third‑party service (e.g. Logtail or Sentry). Logs are printed to the console during development and forwarded to this endpoint in production.
+
 ## Support
 
 For any questions or issues, please open an issue in the repository.

@@ -2,7 +2,8 @@
 import { NextResponse } from 'next/server';
 import { stripe } from '@/utils/stripe';
 import { getSupabaseClient } from '@/utils/supabase/server';
-import { requireSession } from '@/utils/session';
+import { auth } from '@/lib/auth';
+import { logger } from '@/utils/logger';
 export async function POST(request: Request) {
         try {
                 const session = await requireSession()
@@ -44,8 +45,8 @@ export async function POST(request: Request) {
 
 
 		return NextResponse.json({ id: session.id, client_secret: session.client_secret });
-	} catch (error: any) {
-		console.error(error);
-		return NextResponse.json({ message: error.message }, { status: 500 });
-	}
+        } catch (error: any) {
+                logger.error('Checkout API error', error);
+                return NextResponse.json({ message: error.message }, { status: 500 });
+        }
 }
