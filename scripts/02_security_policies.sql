@@ -9,67 +9,82 @@ ALTER TABLE public.reminders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_stats ENABLE ROW LEVEL SECURITY;
 
 -- Create policies for profiles
+DROP POLICY IF EXISTS "Users can view their own profile" ON public.profiles;
 CREATE POLICY "Users can view their own profile" 
 ON public.profiles FOR SELECT 
 USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users can update their own profile" ON public.profiles;
 CREATE POLICY "Users can update their own profile" 
 ON public.profiles FOR UPDATE 
 USING (auth.uid() = id);
 
 -- Create policies for coaching_preferences
+DROP POLICY IF EXISTS "Users can view their own coaching preferences" ON public.coaching_preferences;
 CREATE POLICY "Users can view their own coaching preferences" 
 ON public.coaching_preferences FOR SELECT 
 USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert their own coaching preferences" ON public.coaching_preferences;
 CREATE POLICY "Users can insert their own coaching preferences" 
 ON public.coaching_preferences FOR INSERT 
 WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own coaching preferences" ON public.coaching_preferences;
 CREATE POLICY "Users can update their own coaching preferences" 
 ON public.coaching_preferences FOR UPDATE 
 USING (auth.uid() = user_id);
 
 -- Create policies for notification_preferences
+DROP POLICY IF EXISTS "Users can view their own notification preferences" ON public.notification_preferences;
 CREATE POLICY "Users can view their own notification preferences" 
 ON public.notification_preferences FOR SELECT 
 USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert their own notification preferences" ON public.notification_preferences;
 CREATE POLICY "Users can insert their own notification preferences" 
 ON public.notification_preferences FOR INSERT 
 WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own notification preferences" ON public.notification_preferences;
 CREATE POLICY "Users can update their own notification preferences" 
 ON public.notification_preferences FOR UPDATE 
 USING (auth.uid() = user_id);
 
 -- Create policies for goals
+DROP POLICY IF EXISTS "Users can view their own goals" ON public.goals;
 CREATE POLICY "Users can view their own goals" 
 ON public.goals FOR SELECT 
 USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert their own goals" ON public.goals;
 CREATE POLICY "Users can insert their own goals" 
 ON public.goals FOR INSERT 
 WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own goals" ON public.goals;
 CREATE POLICY "Users can update their own goals" 
 ON public.goals FOR UPDATE 
 USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete their own goals" ON public.goals;
 CREATE POLICY "Users can delete their own goals" 
 ON public.goals FOR DELETE 
 USING (auth.uid() = user_id);
 
 -- Create policies for check_ins
+DROP POLICY IF EXISTS "Users can view their own check-ins" ON public.check_ins;
 CREATE POLICY "Users can view their own check-ins" 
 ON public.check_ins FOR SELECT 
 USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert their own check-ins" ON public.check_ins;
 CREATE POLICY "Users can insert their own check-ins" 
 ON public.check_ins FOR INSERT 
 WITH CHECK (auth.uid() = user_id);
 
 -- Create policies for messages
+DROP POLICY IF EXISTS "Users can view messages from their own check-ins" ON public.messages;
 CREATE POLICY "Users can view messages from their own check-ins" 
 ON public.messages FOR SELECT 
 USING (EXISTS (
@@ -78,6 +93,7 @@ USING (EXISTS (
     AND check_ins.user_id = auth.uid()
 ));
 
+DROP POLICY IF EXISTS "Users can insert messages to their own check-ins" ON public.messages;
 CREATE POLICY "Users can insert messages to their own check-ins" 
 ON public.messages FOR INSERT 
 WITH CHECK (EXISTS (
@@ -87,30 +103,36 @@ WITH CHECK (EXISTS (
 ));
 
 -- Create policies for reminders
+DROP POLICY IF EXISTS "Users can view their own reminders" ON public.reminders;
 CREATE POLICY "Users can view their own reminders" 
 ON public.reminders FOR SELECT 
 USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert their own reminders" ON public.reminders;
 CREATE POLICY "Users can insert their own reminders" 
 ON public.reminders FOR INSERT 
 WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own reminders" ON public.reminders;
 CREATE POLICY "Users can update their own reminders" 
 ON public.reminders FOR UPDATE 
 USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete their own reminders" ON public.reminders;
 CREATE POLICY "Users can delete their own reminders" 
 ON public.reminders FOR DELETE 
 USING (auth.uid() = user_id);
 
 -- Create policies for user_stats
+DROP POLICY IF EXISTS "Users can view their own stats" ON public.user_stats;
 CREATE POLICY "Users can view their own stats" 
 ON public.user_stats FOR SELECT 
 USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own stats" ON public.user_stats;
 CREATE POLICY "Users can update their own stats" 
 ON public.user_stats FOR UPDATE 
 USING (auth.uid() = user_id);
 
 -- Output the created policies
-SELECT table_name, policy_name FROM pg_policies WHERE schemaname = 'public';
+SELECT tablename, policyname FROM pg_policies WHERE schemaname = 'public';
