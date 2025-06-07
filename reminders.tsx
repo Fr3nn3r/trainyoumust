@@ -1,61 +1,88 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, User, MessageCircle, Home, Plus, X, Clock, Crown } from "lucide-react"
+import { Calendar, User, MessageCircle, Home, Plus, X, Clock, Crown, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-
-interface Reminder {
-  id: string
-  title: string
-  date: string
-  time: string
-  method: string
-  type: string
-}
+import { getCurrentUser, signOut } from "@/lib/auth"
+import { getUserProfile } from "@/lib/profile"
+import { getUserReminders, createReminder, deleteReminder, subscribeToReminders, Reminder } from "@/lib/reminders"
+import { cn } from "@/lib/utils"
+import { Calendar as CalendarIcon } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { format } from "date-fns"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { useRouter } from "next/navigation"
 
 export default function Reminders() {
   const [selectedDate, setSelectedDate] = useState<string>("")
   const [showAddForm, setShowAddForm] = useState(false)
   const [newReminder, setNewReminder] = useState({
     title: "",
+    date: "",
     time: "",
-    method: "",
-    type: "",
+    notification_method: "email",
+    reminder_type: "one-time",
   })
+  const [reminders, setReminders] = useState<Reminder[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [user, setUser] = useState<{
+    avatar: string
+    firstName: string
+    lastName: string
+  } | null>(null)
+  const [date, setDate] = useState<Date | undefined>(new Date())
+  const router = useRouter()
 
-  const [reminders, setReminders] = useState<Reminder[]>([
-    {
-      id: "1",
-      title: "Content Planning Session",
-      date: "2024-01-15",
-      time: "09:00",
-      method: "email",
-      type: "content-creation",
-    },
-    {
-      id: "2",
-      title: "Weekly Goal Review",
-      date: "2024-01-17",
-      time: "14:00",
-      method: "whatsapp",
-      type: "goal-review",
-    },
-    {
-      id: "3",
-      title: "Daily Check-in",
-      date: "2024-01-18",
-      time: "10:00",
-      method: "email",
-      type: "check-in",
-    },
-  ])
+  useEffect(() => {
+    const loadInitialData = async () => {
+      try {
+        const { user: authUser } = await getCurrentUser()
+        if (!authUser) {
+          setError("You must be logged in to view this page.")
+          setIsLoading(false)
+          return
+        }
+
+        const [profileResponse, reminderResponse] = await Promise.all([
+          getUserProfile(authUser.id),
+          getUserReminders(authUser.id),
+        ])
+
+        const profile = profileResponse.profile
+        const reminderData = reminderResponse.reminders || []
+
+        setUser({
+          avatar: profile?.avatar_url || "/placeholder.svg?height=40&width=40&text=U",
+          firstName: profile?.first_name || "",
+          lastName: profile?.last_name || "",
+        })
+
+        setReminders(reminderData)
+      } catch (err) {
+        setError("Failed to load reminders.")
+        console.error(err)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadInitialData()
+  }, [])
 
   // Generate calendar days for current month
   const generateCalendarDays = () => {
@@ -101,20 +128,40 @@ export default function Reminders() {
     }
   }
 
-  const addReminder = () => {
-    if (newReminder.title && newReminder.time && newReminder.method && newReminder.type && selectedDate) {
-      const reminder: Reminder = {
-        id: Date.now().toString(),
-        title: newReminder.title,
-        date: selectedDate,
-        time: newReminder.time,
-        method: newReminder.method,
-        type: newReminder.type,
+  const handleCreateReminder = async () => {
+    const { user: authUser } = await getCurrentUser()
+    if (!authUser) {
+      setError("You must be logged in to create a reminder.")
+      return
+    }
+
+    if (!newReminder.title || !date || !newReminder.time) {
+      setError("Please fill in all fields for the new reminder.")
+      return
+    }
+
+    try {
+      const reminderToCreate = {
+        ...newReminder,
+        date: format(date, "yyyy-MM-dd"),
       }
-      setReminders((prev) => [...prev, reminder])
-      setNewReminder({ title: "", time: "", method: "", type: "" })
-      setShowAddForm(false)
-      setSelectedDate("")
+      const { reminder } = await createReminder(authUser.id, reminderToCreate)
+      if (reminder) {
+        setReminders((prev) => [...prev, reminder])
+        setNewReminder({
+          title: "",
+          date: "",
+          time: "",
+          notification_method: "email",
+          reminder_type: "one-time",
+        })
+        setDate(new Date())
+      } else {
+        throw new Error("Failed to create reminder.")
+      }
+    } catch (err) {
+      setError("Failed to create reminder.")
+      console.error(err)
     }
   }
 
@@ -167,6 +214,11 @@ export default function Reminders() {
     "December",
   ]
 
+  const handleSignOut = async () => {
+    await signOut()
+    router.push("/login")
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -180,12 +232,27 @@ export default function Reminders() {
               <Crown className="h-4 w-4 mr-2" />
               Upgrade
             </Button>
-            <Link href="/profile">
-              <Avatar className="cursor-pointer">
-                <AvatarImage src="/placeholder.svg?height=40&width=40&text=AJ" alt="Alex Johnson" />
-                <AvatarFallback>AJ</AvatarFallback>
-              </Avatar>
-            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Avatar className="cursor-pointer">
+                  <AvatarImage src={user?.avatar} alt={user ? `${user.firstName} ${user.lastName}` : "User"} />
+                  <AvatarFallback>
+                    {user?.firstName?.[0] || "U"}
+                    {user?.lastName?.[0] || ""}
+                  </AvatarFallback>
+                </Avatar>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/profile">Profile Settings</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleSignOut}>
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </header>
@@ -237,9 +304,9 @@ export default function Reminders() {
                             {new Date(reminder.date).toLocaleDateString()} at {reminder.time}
                           </p>
                           <div className="flex items-center mt-1">
-                            <span className="mr-1">{getMethodIcon(reminder.method)}</span>
+                            <span className="mr-1">{getMethodIcon(reminder.notification_method)}</span>
                             <Badge variant="outline" className="text-xs">
-                              {reminder.type.replace("-", " ")}
+                              {reminder.reminder_type.replace("-", " ")}
                             </Badge>
                           </div>
                         </div>
@@ -294,7 +361,7 @@ export default function Reminders() {
                           {dayReminders.slice(0, 2).map((reminder) => (
                             <div
                               key={reminder.id}
-                              className={`text-xs p-1 rounded ${getTypeColor(reminder.type)} truncate`}
+                              className={`text-xs p-1 rounded ${getTypeColor(reminder.reminder_type)} truncate`}
                             >
                               {reminder.title}
                             </div>
@@ -326,68 +393,72 @@ export default function Reminders() {
                     <Label htmlFor="title">Reminder Title</Label>
                     <Input
                       id="title"
+                      placeholder="e.g., Follow up with John"
                       value={newReminder.title}
-                      onChange={(e) => setNewReminder((prev) => ({ ...prev, title: e.target.value }))}
-                      placeholder="Enter reminder title..."
+                      onChange={(e) => setNewReminder({ ...newReminder, title: e.target.value })}
+                      className="flex-grow"
                     />
                   </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="time">Time</Label>
-                      <Input
-                        id="time"
-                        type="time"
-                        value={newReminder.time}
-                        onChange={(e) => setNewReminder((prev) => ({ ...prev, time: e.target.value }))}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Notification Method</Label>
-                      <Select
-                        value={newReminder.method}
-                        onValueChange={(value) => setNewReminder((prev) => ({ ...prev, method: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select method" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="email">📧 Email</SelectItem>
-                          <SelectItem value="whatsapp">📱 WhatsApp</SelectItem>
-                          <SelectItem value="push">🔔 Push Notification</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  <div className="flex items-center space-x-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant={"outline"}
+                          className={cn("w-[280px] justify-start text-left font-normal", !date && "text-muted-foreground")}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {date ? format(date, "PPP") : <span>Pick a date</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
+                      </PopoverContent>
+                    </Popover>
+                    <Input
+                      type="time"
+                      value={newReminder.time}
+                      onChange={(e) => setNewReminder({ ...newReminder, time: e.target.value })}
+                      className="w-[120px]"
+                    />
                   </div>
-
-                  <div className="space-y-2">
-                    <Label>Reminder Type</Label>
+                  <div className="flex items-center space-x-2">
                     <Select
-                      value={newReminder.type}
-                      onValueChange={(value) => setNewReminder((prev) => ({ ...prev, type: value }))}
+                      value={newReminder.notification_method}
+                      onValueChange={(value) => setNewReminder({ ...newReminder, notification_method: value })}
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select type" />
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Notification method" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="content-creation">Content Creation</SelectItem>
-                        <SelectItem value="check-in">Check-in Reminder</SelectItem>
+                        <SelectItem value="email">Email</SelectItem>
+                        <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                        <SelectItem value="push">Push Notification</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select
+                      value={newReminder.reminder_type}
+                      onValueChange={(value) => setNewReminder({ ...newReminder, reminder_type: value })}
+                    >
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Reminder type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="one-time">One-time</SelectItem>
+                        <SelectItem value="recurring">Recurring</SelectItem>
                         <SelectItem value="goal-review">Goal Review</SelectItem>
-                        <SelectItem value="custom">Custom Reminder</SelectItem>
+                        <SelectItem value="content-creation">Content Creation</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-
                   <div className="flex space-x-3">
                     <Button
-                      onClick={addReminder}
-                      disabled={!newReminder.title || !newReminder.time || !newReminder.method || !newReminder.type}
+                      onClick={handleCreateReminder}
+                      disabled={!newReminder.title || !newReminder.time || !newReminder.notification_method || !newReminder.reminder_type}
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Add Reminder
                     </Button>
-                    <Button variant="outline" onClick={() => setShowAddForm(false)}>
+                    <Button variant="ghost" onClick={() => setShowAddForm(false)}>
                       Cancel
                     </Button>
                   </div>
@@ -415,8 +486,8 @@ export default function Reminders() {
                           <div className="flex-1">
                             <div className="flex items-center space-x-2 mb-1">
                               <h4 className="font-medium">{reminder.title}</h4>
-                              <Badge variant="outline" className={getTypeColor(reminder.type)}>
-                                {reminder.type.replace("-", " ")}
+                              <Badge variant="outline" className={getTypeColor(reminder.reminder_type)}>
+                                {reminder.reminder_type.replace("-", " ")}
                               </Badge>
                             </div>
                             <div className="flex items-center space-x-4 text-sm text-gray-600">
@@ -429,7 +500,7 @@ export default function Reminders() {
                                 {reminder.time}
                               </span>
                               <span>
-                                {getMethodIcon(reminder.method)} {reminder.method}
+                                {getMethodIcon(reminder.notification_method)} {reminder.notification_method}
                               </span>
                             </div>
                           </div>

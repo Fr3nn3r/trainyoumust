@@ -46,9 +46,9 @@ FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE OR REPLACE FUNCTION handle_new_user_creation()
 RETURNS TRIGGER AS $$
 BEGIN
-    -- Create a profile for the new user
-    INSERT INTO public.profiles (id, first_name, last_name, email)
-    VALUES (NEW.id, '', '', NEW.email);
+    -- Create a profile for the new user, pulling avatar from raw_user_meta_data
+    INSERT INTO public.profiles (id, first_name, last_name, email, avatar_url)
+    VALUES (NEW.id, '', '', NEW.email, NEW.raw_user_meta_data->>'avatar_url');
     
     -- Create default user stats
     INSERT INTO public.user_stats (user_id, profile_completion)

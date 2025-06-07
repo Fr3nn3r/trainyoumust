@@ -1,7 +1,7 @@
 import { supabase } from "./supabase"
 import type { Database } from "./database.types"
 
-type Reminder = Database["public"]["Tables"]["reminders"]["Row"]
+export type Reminder = Database["public"]["Tables"]["reminders"]["Row"]
 
 export async function getUserReminders(userId: string) {
   const { data, error } = await supabase

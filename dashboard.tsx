@@ -23,6 +23,14 @@ import { getCurrentUser, signOut } from "@/lib/auth"
 import { getUserProfile, getUserStats } from "@/lib/profile"
 import { getUserReminders } from "@/lib/reminders"
 import { useRouter } from "next/navigation"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 interface UserData {
   id: string
@@ -174,26 +182,27 @@ export default function Dashboard() {
               <Crown className="h-4 w-4 mr-2" />
               Upgrade
             </Button>
-            <div className="relative group">
-              <Avatar className="cursor-pointer">
-                <AvatarImage src={user.avatar || "/placeholder.svg"} alt={`${user.firstName} ${user.lastName}`} />
-                <AvatarFallback>
-                  {user.firstName?.[0] || "U"}
-                  {user.lastName?.[0] || ""}
-                </AvatarFallback>
-              </Avatar>
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 hidden group-hover:block">
-                <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                  Profile Settings
-                </Link>
-                <button
-                  onClick={handleSignOut}
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Avatar className="cursor-pointer">
+                  <AvatarImage src={user.avatar || "/placeholder.svg"} alt={`${user.firstName} ${user.lastName}`} />
+                  <AvatarFallback>
+                    {user.firstName?.[0] || "U"}
+                    {user.lastName?.[0] || ""}
+                  </AvatarFallback>
+                </Avatar>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/profile">Profile Settings</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleSignOut}>
                   Sign Out
-                </button>
-              </div>
-            </div>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </header>

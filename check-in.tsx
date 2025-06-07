@@ -9,6 +9,17 @@ import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Send, Calendar, User, MessageCircle, Home, Crown } from "lucide-react"
 import Link from "next/link"
+import { getCurrentUser, signOut } from "@/lib/auth"
+import { getUserProfile } from "@/lib/profile"
+import { useRouter } from "next/navigation"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 interface Message {
   id: string
@@ -38,10 +49,32 @@ export default function CheckIn() {
     },
   ])
   const [inputValue, setInputValue] = useState("")
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [isSending, setIsSending] = useState(false)
+  const endOfMessagesRef = useRef<null | HTMLDivElement>(null)
+  const [user, setUser] = useState<{
+    avatar: string
+    firstName: string
+    lastName: string
+  } | null>(null)
+  const router = useRouter()
+
+  useEffect(() => {
+    const loadInitialData = async () => {
+      const { user: authUser } = await getCurrentUser()
+      if (authUser) {
+        const { profile } = await getUserProfile(authUser.id)
+        setUser({
+          avatar: profile?.avatar_url || "/placeholder.svg?height=40&width=40&text=U",
+          firstName: profile?.first_name || "",
+          lastName: profile?.last_name || "",
+        })
+      }
+    }
+    loadInitialData()
+  }, [])
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+    endOfMessagesRef.current?.scrollIntoView({ behavior: "smooth" })
   }
 
   useEffect(() => {
@@ -92,6 +125,11 @@ export default function CheckIn() {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
   }
 
+  const handleSignOut = async () => {
+    await signOut()
+    router.push("/login")
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -105,12 +143,27 @@ export default function CheckIn() {
               <Crown className="h-4 w-4 mr-2" />
               Upgrade
             </Button>
-            <Link href="/profile">
-              <Avatar className="cursor-pointer">
-                <AvatarImage src="/placeholder.svg?height=40&width=40&text=AJ" alt="Alex Johnson" />
-                <AvatarFallback>AJ</AvatarFallback>
-              </Avatar>
-            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Avatar className="cursor-pointer">
+                  <AvatarImage src={user?.avatar} alt={user ? `${user.firstName} ${user.lastName}` : "User"} />
+                  <AvatarFallback>
+                    {user?.firstName?.[0] || "U"}
+                    {user?.lastName?.[0] || ""}
+                  </AvatarFallback>
+                </Avatar>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/profile">Profile Settings</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleSignOut}>
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </header>
@@ -202,7 +255,7 @@ export default function CheckIn() {
                       </div>
                     </div>
                   ))}
-                  <div ref={messagesEndRef} />
+                  <div ref={endOfMessagesRef} />
                 </div>
 
                 {/* Input Area */}

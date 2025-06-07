@@ -29,6 +29,16 @@ import {
   Home,
 } from "lucide-react"
 import Link from "next/link"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { getCurrentUser, signOut } from "@/lib/auth"
+import { useRouter } from "next/navigation"
 
 interface Goal {
   id: string
@@ -37,6 +47,7 @@ interface Goal {
 }
 
 export default function Profile() {
+  const router = useRouter()
   // Mock user data - replace with actual user data
   const [userData, setUserData] = useState({
     firstName: "Alex",
@@ -61,7 +72,7 @@ export default function Profile() {
     preferredTime: "14:00",
 
     // Subscription
-    plan: "Free",
+    plan: "Pro",
     billingCycle: "monthly",
     nextBilling: "2024-02-15",
     usage: {
@@ -117,6 +128,11 @@ export default function Profile() {
     // Add your save logic here
   }
 
+  const handleSignOut = async () => {
+    await signOut()
+    router.push("/login")
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -131,12 +147,24 @@ export default function Profile() {
               <Crown className="h-4 w-4 mr-2" />
               Upgrade
             </Button>
-            <Link href="/profile">
-              <Avatar className="cursor-pointer">
-                <AvatarImage src="/placeholder.svg?height=80&width=80&text=AJ" alt="Alex Johnson" />
-                <AvatarFallback>AJ</AvatarFallback>
-              </Avatar>
-            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Avatar className="cursor-pointer">
+                  <AvatarImage src={userData.avatar} alt={`${userData.firstName} ${userData.lastName}`} />
+                  <AvatarFallback>
+                    {userData.firstName?.[0] || ""}
+                    {userData.lastName?.[0] || ""}
+                  </AvatarFallback>
+                </Avatar>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut}>
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </header>
